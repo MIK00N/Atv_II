@@ -4,10 +4,7 @@
 // Usar 'using namespace std;' é comum em exercícios acadêmicos para simplificar.
 using namespace std;
 
-/**
- * @brief Define a estrutura do Nó da árvore.
- * Cada nó contém um valor e ponteiros para os filhos da esquerda e direita.
- */
+
 struct No {
     int valor;
     No *esquerda;
@@ -21,9 +18,6 @@ struct No {
     }
 };
 
-/**
- * @brief Classe que implementa a Árvore Binária de Busca (BST).
- */
 class ArvoreBinariaBusca {
 private:
     No* raiz; // Ponteiro para o nó raiz da árvore
@@ -55,10 +49,7 @@ private:
         }
     }
 
-    /**
-     * @brief Percurso Pré-Ordem (Pre-Order): Raiz, Esquerda, Direita.
-     * Útil para ver a estrutura da árvore como ela foi montada.
-     */
+   
     void listarPreOrdemRec(No* no) {
         if (no != nullptr) {
             cout << no->valor << " ";

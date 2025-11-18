@@ -3,10 +3,7 @@
 
 using namespace std;
 
-/**
- * @brief Define a estrutura do Nó da árvore.
- * (Usando a estrutura simples dos exemplos anteriores)
- */
+
 struct No {
     int valor;
     No *esquerda;
@@ -16,19 +13,11 @@ struct No {
     No(int v) : valor(v), esquerda(nullptr), direita(nullptr) {}
 };
 
-/**
- * @brief Classe que implementa a Árvore Binária de Busca (BST).
- */
 class ArvoreBinariaBusca {
 private:
     No* raiz;
 
-    // --- FUNÇÃO RECURSIVA PRIVADA ---
-    /**
-     * @brief Função recursiva que verifica se a árvore/sub-árvore é cheia.
-     * @param no O nó raiz da sub-árvore atual.
-     * @return 1 se for cheia, 0 se não for.
-     */
+    
     int _eCheiaRecursivo(No* no) {
         // 1. Caso Base: Árvore vazia é considerada cheia.
         if (no == nullptr) {
@@ -90,10 +79,7 @@ public:
     // -----------------------------------------------------------------
     // --- FUNÇÃO PÚBLICA SOLICITADA ---
     // -----------------------------------------------------------------
-    /**
-     * @brief Verifica se a árvore binária é cheia.
-     * @return 1 se a árvore for cheia (ou vazia), 0 caso contrário.
-     */
+    
     int eCheia() {
         // Apenas chama a função recursiva começando pela raiz.
         return _eCheiaRecursivo(raiz);

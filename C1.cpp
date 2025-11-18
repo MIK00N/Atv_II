@@ -1,304 +1,311 @@
 #include <iostream>
-#include <fstream>      // Para leitura de arquivos (ifstream)
+#include <fstream>
+#include <sstream>
 #include <vector>
 #include <string>
-#include <sstream>      // Para processar linhas (stringstream)
-#include <iomanip>      // Para formatar a matriz (setw)
-#include <limits>       // Para limpar o buffer de entrada (numeric_limits)
 
-using namespace std;
+// 1. Definição do Tipo
+#define vertex int
 
-/**
- * @brief Classe para representar um Grafo Direcionado (Digrafo)
- * usando uma Matriz de Adjacência.
- */
-class Grafo {
+// Classe Graph para representação de grafos usando matrizes de adjacência e peso
+class Graph {
 private:
-    int numVertices;
-    vector<vector<int>> matrizAdjacencia;
+    int V;       // Número de vértices
+    int A;       // Número de arcos
+    int **adj;   // Matriz de adjacência (1 se há arco, 0 caso contrário)
+    int **dist;  // Matriz de distâncias/pesos
+    int *grau;   // Grau de saída de cada vértice
 
-    /**
-     * @brief Verifica se um vértice 'v' está dentro dos limites válidos.
-     */
-    bool ehValido(int v) {
-        return (v >= 0 && v < numVertices);
-    }
+    // Função privada para alocar e inicializar as matrizes
+    void initializeMatrices(int V_val);
 
 public:
-    /**
-     * @brief Construtor padrão. Cria um grafo vazio.
-     */
-    Grafo() : numVertices(0) {}
+    // Construtor: Inicializa a partir de um arquivo (obrigatorio "grafo.txt")
+    Graph(const std::string& filename);
+    
+    // Destrutor: Libera a memória alocada dinamicamente
+    ~Graph(); 
 
-    /**
-     * @brief Carrega o grafo a partir de um arquivo .txt.
-     * @param nomeArquivo O caminho para o arquivo.
-     * @return true se o carregamento for bem-sucedido, false caso contrário.
-     */
-    bool carregarDeArquivo(const string& nomeArquivo) {
-        ifstream arquivo(nomeArquivo);
-        if (!arquivo.is_open()) {
-            cerr << "Erro: Nao foi possivel abrir o arquivo " << nomeArquivo << endl;
-            return false;
-        }
+    // Métodos solicitados
+    void insertArc(vertex v, vertex w, int weight);
+    void removeArc(vertex v, vertex w);
+    void listGraph(); 
+    void displayAdjacencyMatrix(); 
+    void displayDistanceMatrix(); 
+    void displayVertexDegrees();
 
-        string linha;
-        int V, E;
-
-        // 1. Ler a primeira linha (V E)
-        if (!getline(arquivo, linha)) {
-            cerr << "Erro: Arquivo vazio." << endl;
-            arquivo.close();
-            return false;
-        }
-
-        stringstream ss(linha);
-        if (!(ss >> V >> E)) {
-            cerr << "Erro: Formato invalido da primeira linha (deve ser 'V E')." << endl;
-            arquivo.close();
-            return false;
-        }
-
-        // 2. Inicializar (ou resetar) a estrutura do grafo
-        this->numVertices = V;
-        // Cria uma matriz V x V preenchida com 0s
-        matrizAdjacencia.assign(V, vector<int>(V, 0));
-
-        // 3. Ler os Arcos (E linhas)
-        int arcosLidos = 0;
-        while (getline(arquivo, linha) && arcosLidos < E) {
-            stringstream ss_arco(linha);
-            int u, v;
-            if (ss_arco >> u >> v) {
-                // Usa a função de inserção (que já faz a validação)
-                inserirArco(u, v);
-                arcosLidos++;
-            }
-        }
-
-        arquivo.close();
-        cout << "Info: Grafo carregado com sucesso. " << V << " vertices e " << arcosLidos << " arcos." << endl;
-        return true;
-    }
-
-    /**
-     * @brief F1: Insere um arco direcionado (u -> v) no grafo.
-     */
-    void inserirArco(int u, int v) {
-        if (ehValido(u) && ehValido(v)) {
-            if (matrizAdjacencia[u][v] == 0) {
-                matrizAdjacencia[u][v] = 1;
-            }
-            // Se já for 1, o arco já existe.
-        } else {
-            cerr << "Erro (Inserir): Vertice " << u << " ou " << v << " invalido." << endl;
-        }
-    }
-
-    /**
-     * @brief F2: Remove um arco direcionado (u -> v) do grafo.
-     */
-    void removerArco(int u, int v) {
-        if (ehValido(u) && ehValido(v)) {
-            if (matrizAdjacencia[u][v] == 1) {
-                matrizAdjacencia[u][v] = 0;
-            }
-            // Se já for 0, o arco já não existe.
-        } else {
-            cerr << "Erro (Remover): Vertice " << u << " ou " << v << " invalido." << endl;
-        }
-    }
-
-    /**
-     * @brief F3: Lista o grafo no formato de Lista de Adjacência.
-     */
-    void listarGrafo() {
-        if (numVertices == 0) {
-            cout << "Grafo vazio." << endl;
-            return;
-        }
-        cout << "\n--- Listagem do Grafo (Formato Lista de Adjacencia) ---" << endl;
-        for (int i = 0; i < numVertices; ++i) {
-            cout << i << " -> ";
-            bool temVizinho = false;
-            for (int j = 0; j < numVertices; ++j) {
-                if (matrizAdjacencia[i][j] == 1) {
-                    if (temVizinho) {
-                        cout << ", ";
-                    }
-                    cout << j;
-                    temVizinho = true;
-                }
-            }
-            if (!temVizinho) {
-                cout << "(nenhum)";
-            }
-            cout << endl;
-        }
-        cout << "--------------------------------------------------------" << endl;
-    }
-
-    /**
-     * @brief F4: Exibe a Matriz de Adjacência.
-     */
-    void exibirMatrizAdjacencia() {
-        if (numVertices == 0) {
-            cout << "Grafo vazio." << endl;
-            return;
-        }
-        cout << "\n--- Matriz de Adjacencia ---" << endl;
-        
-        // Cabeçalho (colunas)
-        cout << "   |";
-        for (int i = 0; i < numVertices; ++i) {
-            cout << setw(3) << i;
-        }
-        cout << "\n---+";
-        for (int i = 0; i < numVertices; ++i) {
-            cout << "---";
-        }
-        cout << endl;
-
-        // Linhas
-        for (int i = 0; i < numVertices; ++i) {
-            cout << setw(3) << i << "|";
-            for (int j = 0; j < numVertices; ++j) {
-                cout << setw(3) << matrizAdjacencia[i][j];
-            }
-            cout << endl;
-        }
-        cout << "------------------------------" << endl;
-    }
-
-    /**
-     * @brief F5: Exibe os graus de entrada (In) e saída (Out) de cada vértice.
-     */
-    void exibirGrausVertices() {
-        if (numVertices == 0) {
-            cout << "Grafo vazio." << endl;
-            return;
-        }
-        cout << "\n--- Graus dos Vertices ---" << endl;
-        for (int i = 0; i < numVertices; ++i) {
-            int grauSaida = 0;
-            int grauEntrada = 0;
-
-            for (int j = 0; j < numVertices; ++j) {
-                // Grau de Saída: Arcos que SAEM de 'i' (linha 'i')
-                grauSaida += matrizAdjacencia[i][j];
-                
-                // Grau de Entrada: Arcos que CHEGAM em 'i' (coluna 'i')
-                grauEntrada += matrizAdjacencia[j][i];
-            }
-            
-            cout << "Vertice " << setw(2) << i << ": "
-                 << "Grau de Saida (Out): " << grauSaida
-                 << " | Grau de Entrada (In): " << grauEntrada
-                 << endl;
-        }
-        cout << "----------------------------" << endl;
-    }
+    // Getter para V (útil para o main)
+    int getV() const { return V; }
 };
 
+// --- Implementação da Classe Graph ---
 
-// --- Funções Auxiliares para o Menu ---
+// Função auxiliar para alocar e inicializar as matrizes
+void Graph::initializeMatrices(int V_val) {
+    V = V_val;
+    A = 0;
+    
+    // Alocação e inicialização
+    adj = new int*[V];
+    dist = new int*[V];
+    grau = new int[V];
 
-void exibirMenu() {
-    cout << "\n========== Menu de Gerenciamento de Grafo ==========" << endl;
-    cout << "1. Carregar Grafo do Arquivo (grafo.txt)" << endl;
-    cout << "2. Inserir Arco (u, v)" << endl;
-    cout << "3. Remover Arco (u, v)" << endl;
-    cout << "4. Listar Grafo (Formato Lista de Adjacencia)" << endl;
-    cout << "5. Exibir Matriz de Adjacencia" << endl;
-    cout << "6. Exibir Graus dos Vertices" << endl;
-    cout << "0. Sair" << endl;
-    cout << "==================================================" << endl;
-    cout << "Escolha uma opcao: ";
-}
+    for (int i = 0; i < V; ++i) {
+        adj[i] = new int[V];
+        dist[i] = new int[V];
+        grau[i] = 0; // Inicializa o grau de saída
 
-/**
- * @brief Lê um inteiro da entrada padrão com segurança.
- */
-int lerInteiro(const string& prompt) {
-    int val;
-    cout << prompt;
-    while (!(cin >> val)) {
-        cout << "Entrada invalida. Digite um numero inteiro: ";
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        for (int j = 0; j < V; ++j) {
+            adj[i][j] = 0; 
+            dist[i][j] = 0; 
+        }
     }
-    // Limpa o buffer DEPOIS de uma leitura bem-sucedida
-    cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
-    return val;
 }
 
+// Construtor (Leitura do Arquivo)
+Graph::Graph(const std::string& filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Erro: Nao foi possivel abrir o arquivo " << filename << ". Certifique-se que o arquivo existe." << std::endl;
+        V = 0; A = 0; adj = nullptr; dist = nullptr; grau = nullptr;
+        return;
+    }
 
-// --- Função Principal ---
+    int V_file, A_file;
+    // 1. Lê o número de vértices (V) e o número de arcos (A)
+    if (!(file >> V_file >> A_file)) {
+        std::cerr << "Erro: Arquivo com formato invalido (V e A nao encontrados)." << std::endl;
+        V = 0; A = 0; adj = nullptr; dist = nullptr; grau = nullptr;
+        return;
+    }
+
+    initializeMatrices(V_file); // Inicializa a estrutura do grafo
+
+    vertex u, v;
+    int weight;
+    
+    // 2. Loop para ler e inserir cada arco
+    for (int i = 0; i < A_file; ++i) {
+        if (file >> u >> v >> weight) {
+            // Verifica se os vertices são validos e se o arco ainda nao existe
+            if (u >= 0 && u < V && v >= 0 && v < V) {
+                if (adj[u][v] == 0) {
+                    adj[u][v] = 1;
+                    dist[u][v] = weight;
+                    grau[u]++; 
+                    A++;      
+                } else {
+                    // Se o arco já existe no arquivo, apenas atualiza o peso.
+                    dist[u][v] = weight; 
+                }
+            } else {
+                 std::cerr << "Aviso: Vertices invalidos (" << u << ", " << v << ") encontrados no arquivo." << std::endl;
+            }
+        } else {
+            std::cerr << "Aviso: Arquivo com menos arcos do que o esperado (" << A_file << ")." << std::endl;
+            break; 
+        }
+    }
+
+    std::cout << "--- Grafo carregado ---" << std::endl;
+    std::cout << "Vertices: " << V << ", Arcos Iniciais: " << A << std::endl;
+}
+
+// Destrutor
+Graph::~Graph() {
+    if (adj != nullptr) {
+        for (int i = 0; i < V; ++i) {
+            delete[] adj[i];
+            delete[] dist[i];
+        }
+        delete[] adj;
+        delete[] dist;
+        delete[] grau;
+    }
+}
+
+// Inserção de Arco
+void Graph::insertArc(vertex v, vertex w, int weight) {
+    if (v < 0 || v >= V || w < 0 || w >= V) {
+        std::cerr << "Erro: Vertice invalido para a insercao." << std::endl;
+        return;
+    }
+    
+    if (adj[v][w] == 0) {
+        adj[v][w] = 1;
+        grau[v]++;
+        A++;
+        std::cout << "Arco (" << v << ", " << w << ") INSERIDO com peso " << weight << "." << std::endl;
+    } else {
+        std::cout << "Arco (" << v << ", " << w << ") ja existia.";
+    }
+    
+    // Atualiza o peso em ambos os casos (novo ou existente)
+    dist[v][w] = weight; 
+    if (adj[v][w] == 1) { // Só imprime a atualização se já existia
+         std::cout << " Peso atualizado para " << weight << "." << std::endl;
+    }
+}
+
+// Remoção de Arco
+void Graph::removeArc(vertex v, vertex w) {
+    if (v < 0 || v >= V || w < 0 || w >= V) {
+        std::cerr << "Erro: Vertice invalido para a remocao." << std::endl;
+        return;
+    }
+    
+    if (adj[v][w] == 1) {
+        adj[v][w] = 0;
+        dist[v][w] = 0; 
+        grau[v]--;
+        A--;
+        std::cout << "Arco (" << v << ", " << w << ") REMOVIDO." << std::endl;
+    } else {
+        std::cout << "Arco (" << v << ", " << w << ") NAO existe no grafo." << std::endl;
+    }
+}
+
+// Listagem do Grafo (Lista os arcos)
+void Graph::listGraph() {
+    std::cout << "\n--- Listagem do Grafo (Arcos Atuais) ---" << std::endl;
+    if (V == 0) {
+        std::cout << "Grafo vazio." << std::endl;
+        return;
+    }
+
+    std::cout << "Total de Vertices: " << V << ", Total de Arcos: " << A << std::endl;
+
+    for (vertex u = 0; u < V; ++u) {
+        for (vertex v = 0; v < V; ++v) {
+            if (adj[u][v] == 1) {
+                std::cout << "Arco: " << u << " -> " << v << " (Peso: " << dist[u][v] << ")" << std::endl;
+            }
+        }
+    }
+    std::cout << "----------------------------------------" << std::endl;
+}
+
+// Exibição da Matriz de Adjacência
+void Graph::displayAdjacencyMatrix() {
+    std::cout << "\n--- Matriz de Adjacencia (adj) ---" << std::endl;
+    if (V == 0) return;
+
+    // Cabecalho
+    std::cout << "   ";
+    for (int j = 0; j < V; ++j) {
+        std::cout << j << " ";
+    }
+    std::cout << "\n  ";
+    for (int j = 0; j < V * 2; ++j) std::cout << "-";
+    std::cout << std::endl;
+    
+    // Linhas
+    for (int i = 0; i < V; ++i) {
+        std::cout << i << "| ";
+        for (int j = 0; j < V; ++j) {
+            std::cout << adj[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << "----------------------------------" << std::endl;
+}
+
+// Exibição da Matriz de Distância (Pesos)
+void Graph::displayDistanceMatrix() {
+    std::cout << "\n--- Matriz de Distancia (dist) ---" << std::endl;
+    if (V == 0) return;
+    
+    // Cabecalho
+    std::cout << "   ";
+    for (int j = 0; j < V; ++j) {
+        std::cout << j << "   "; 
+    }
+    std::cout << "\n  ";
+    for (int j = 0; j < V * 4; ++j) std::cout << "-";
+    std::cout << std::endl;
+    
+    // Linhas
+    for (int i = 0; i < V; ++i) {
+        std::cout << i << "| ";
+        for (int j = 0; j < V; ++j) {
+            // Imprime o peso (distancia)
+            // Usa setw ou formatacao manual para alinhamento
+            std::cout.width(3);
+            std::cout << dist[i][j] << " "; 
+        }
+        std::cout << std::endl;
+    }
+    std::cout << "------------------------------------" << std::endl;
+}
+
+// Exibição do Grau dos Vértices
+void Graph::displayVertexDegrees() {
+    std::cout << "\n--- Grau de Saida dos Vertices (grau) ---" << std::endl;
+    if (V == 0) return;
+
+    for (int i = 0; i < V; ++i) {
+        std::cout << "Vertice " << i << ": Grau de Saida = " << grau[i] << std::endl;
+    }
+    std::cout << "------------------------------------------" << std::endl;
+}
+
+// --- Estrutura de Arquivo de Exemplo ---
+
+/*
+Para testar, crie um arquivo chamado "grafo.txt" no mesmo diretório do executável 
+com o seguinte conteúdo:
+
+4 5
+0 1 10
+0 2 5
+1 3 2
+2 1 1
+2 3 9
+*/
+
+// --- Função main (Exemplo de Uso) ---
 
 int main() {
-    Grafo meuGrafo;
-    int opcao;
-    bool grafoCarregado = false; // Controla se o grafo foi carregado
+    // Tenta carregar o grafo do arquivo
+    Graph g("grafo.txt");
 
-    do {
-        exibirMenu();
-        
-        // Lê a opção do menu
-        while (!(cin >> opcao)) {
-            cout << "Opcao invalida. Digite um numero: ";
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        }
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Limpa o buffer
+    if (g.getV() == 0) {
+        std::cerr << "Nao foi possivel inicializar o grafo. Verifique o arquivo 'grafo.txt'." << std::endl;
+        return 1; 
+    }
 
-        // Verifica se o grafo foi carregado antes de operações (exceto 1 e 0)
-        if (!grafoCarregado && opcao != 1 && opcao != 0) {
-            cout << "Erro: Por favor, carregue um grafo primeiro (Opcao 1)." << endl;
-            continue;
-        }
+    // 1. Exibição inicial
+    std::cout << "\n#####################################################" << std::endl;
+    std::cout << "## FASE 1: APOS LEITURA DO ARQUIVO ##################" << std::endl;
+    std::cout << "#####################################################" << std::endl;
+    g.listGraph();
+    g.displayAdjacencyMatrix();
+    g.displayDistanceMatrix();
+    g.displayVertexDegrees();
 
-        switch (opcao) {
-            case 1: { // Carregar Grafo
-                string nomeArquivo = "grafo.txt";
-                cout << "Tentando carregar '" << nomeArquivo << "'..." << endl;
-                if (meuGrafo.carregarDeArquivo(nomeArquivo)) {
-                    grafoCarregado = true;
-                } else {
-                    cout << "Falha ao carregar o grafo." << endl;
-                }
-                break;
-            }
-            case 2: { // Inserir Arco
-                int u = lerInteiro("Digite o vertice de origem (u): ");
-                int v = lerInteiro("Digite o vertice de destino (v): ");
-                meuGrafo.inserirArco(u, v);
-                cout << "Arco (" << u << ", " << v << ") inserido (se valido)." << endl;
-                break;
-            }
-            case 3: { // Remover Arco
-                int u = lerInteiro("Digite o vertice de origem (u): ");
-                int v = lerInteiro("Digite o vertice de destino (v): ");
-                meuGrafo.removerArco(u, v);
-                cout << "Arco (" << u << ", " << v << ") removido (se valido)." << endl;
-                break;
-            }
-            case 4: // Listar Grafo
-                meuGrafo.listarGrafo();
-                break;
-            case 5: // Exibir Matriz
-                meuGrafo.exibirMatrizAdjacencia();
-                break;
-            case 6: // Exibir Graus
-                meuGrafo.exibirGrausVertices();
-                break;
-            case 0: // Sair
-                cout << "Saindo do programa..." << endl;
-                break;
-            default:
-                cout << "Opcao invalida. Tente novamente." << endl;
-                break;
-        }
-    } while (opcao != 0);
+    // 2. Teste de Inserção de Arco
+    std::cout << "\n#####################################################" << std::endl;
+    std::cout << "## FASE 2: INSERCAO E ATUALIZACAO ###################" << std::endl;
+    std::cout << "#####################################################" << std::endl;
+    g.insertArc(3, 0, 8);  // Novo arco (3 -> 0)
+    g.insertArc(0, 1, 15); // Atualiza o peso de (0 -> 1)
+    g.insertArc(2, 0, 4);  // Novo arco (2 -> 0)
+    
+    g.displayAdjacencyMatrix();
+    g.displayDistanceMatrix();
+    g.displayVertexDegrees();
 
+    // 3. Teste de Remoção de Arco
+    std::cout << "\n#####################################################" << std::endl;
+    std::cout << "## FASE 3: REMOCAO ##################################" << std::endl;
+    std::cout << "#####################################################" << std::endl;
+    g.removeArc(2, 1); // Remover arco (2 -> 1)
+    g.removeArc(1, 0); // Arco que não existe
+    
+    g.listGraph();
+    g.displayAdjacencyMatrix();
+    g.displayVertexDegrees();
+
+    system("pause");
     return 0;
 }

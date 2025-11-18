@@ -4,10 +4,7 @@
 // Usar 'using namespace std;' é comum em exercícios acadêmicos para simplificar.
 using namespace std;
 
-/**
- * @brief Define a estrutura do Nó da árvore.
- * MODIFICADO: Adicionado 'contador'.
- */
+
 struct No {
     int valor;
     int contador; // <-- MODIFICAÇÃO: Contador de ocorrências

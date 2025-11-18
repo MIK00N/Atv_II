@@ -26,9 +26,7 @@ struct NoArvore {
           esquerda(nullptr), direita(nullptr), altura(1) {} // Novas folhas têm altura 1
 };
 
-/**
- * @brief Classe que implementa a Árvore AVL.
- */
+
 class ArvoreAVL {
 private:
     NoArvore* raiz;
